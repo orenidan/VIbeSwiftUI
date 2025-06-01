@@ -1,7 +1,8 @@
 import SwiftUI
 import Charts
+import ComposableArchitecture
 
-// Enum for chart types
+// Enum for chart types - already Equatable due to String raw value
 internal enum DisplayChartType: String, CaseIterable, Identifiable {
     case bar = "Bar"
     case line = "Line"
@@ -9,33 +10,59 @@ internal enum DisplayChartType: String, CaseIterable, Identifiable {
     internal var id: String { self.rawValue }
 }
 
-// Reusable View for displaying the chart
+// Reusable View for displaying the chart, adapted for TCA
 internal struct ActualChartView: View {
-    internal let dataPoints: [ChartDataPoint]
-    @State private var currentChartType: DisplayChartType = .bar
-    @State private var isMinimized: Bool = false // State for minimizing/expanding chart content
+    // This view will observe a part of the ChartMakerFeature.State
+    // It doesn't own the store directly, but observes state passed down.
+    // For direct store interaction, it would be `let store: StoreOf<SomeScopedFeature>`
+    // or `let store: Store<ChartMakerFeature.State, ChartMakerFeature.Action>`
+    // For simplicity here, we'll assume the parent (ChartMakerView) passes necessary state and sends actions.
+    // However, a more idiomatic TCA approach for a complex sub-view is often to give it its own ScopedStore.
+    // Let's make it take the relevant state directly and provide closures for actions for now,
+    // which ChartMakerView will connect to its store.
+    // OR, we can make it take a Store<State, Action> that is scoped down.
+    // Given its complexity, scoping the store is better.
+
+    let store: StoreOf<ChartMakerFeature> // Scoped store state
+
+    // Define a local State struct that mirrors the part of ChartMakerFeature.State this view cares about.
+    // This is useful if we don't want to pass the whole ChartMakerFeature.State or for previewing.
+    // For direct use with a scoped store, this can be simpler.
+    // Or, define a local subset:
+    // struct ViewState: Equatable {
+    //     let dataPoints: [ChartDataPoint]
+    //     let currentChartType: DisplayChartType
+    //     let isMinimized: Bool
+    // }
+    // let viewState: ViewState
+    // let send: (ChartMakerFeature.Action) -> Void // For sending actions back
 
     internal var body: some View {
-        VStack(spacing: 0) { // Use spacing 0 if elements are too far apart
+        // Access state directly from the store passed in
+        let isMinimized = store.isChartMinimized
+        let currentChartType = store.currentChartType // No binding needed if picker sends action
+
+        VStack(spacing: 0) {
             HStack {
                 Text("Chart Preview")
                     .font(.headline)
                 Spacer()
                 Button {
-                    withAnimation(.easeInOut) {
-                        isMinimized.toggle()
-                    }
+                    store.send(.chartMinimizeButtonTapped, animation: .easeInOut)
                 } label: {
                     Image(systemName: isMinimized ? "chevron.down.circle.fill" : "chevron.up.circle.fill")
                         .font(.title2)
                 }
             }
             .padding(.horizontal)
-            .padding(.top) // Padding for the header row
-            .padding(.bottom, isMinimized ? 0 : 10) // Less bottom padding if minimized
+            .padding(.top)
+            .padding(.bottom, isMinimized ? 0 : 10)
 
             if !isMinimized {
-                Picker("Chart Type", selection: $currentChartType) {
+                Picker("Chart Type", selection: Binding(
+                    get: { store.currentChartType },
+                    set: { store.send(.chartTypeSelected($0)) }
+                )) {
                     ForEach(DisplayChartType.allCases) { type in
                         Text(type.rawValue).tag(type)
                     }
@@ -43,22 +70,23 @@ internal struct ActualChartView: View {
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
                 .padding(.bottom, 5)
-                .onChange(of: currentChartType) { oldValue, newValue in
-                    print("DEBUG: currentChartType changed from \(oldValue.rawValue) to \(newValue.rawValue)")
-                }
+                // .onChange is part of TCA reducer logic if state change needs to trigger effects
 
-                let chartableData = dataPoints.filter { $0.value != nil && ($0.value ?? 0) > 0 && !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                let chartableData = store.dataPoints.filter { dataPointRowState in
+                    let point = dataPointRowState.chartDataPoint
+                    return point.value != nil && (point.value ?? 0) > 0 && !point.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                }.map(\.chartDataPoint) // Map to [ChartDataPoint] for the Chart ForEach
 
                 if chartableData.isEmpty {
                     Text("No valid data (with positive values) to display in chart. Add titles and positive numeric values.")
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
                         .padding()
-                        .frame(height: 250) // Maintain similar height for placeholder
+                        .frame(height: 250)
                 } else {
                     Chart {
                         ForEach(chartableData) { point in
-                            switch currentChartType {
+                            switch currentChartType { // Use the local currentChartType from store state
                             case .bar:
                                 BarMark(
                                     x: .value("Category", point.title),
@@ -70,7 +98,7 @@ internal struct ActualChartView: View {
                                     x: .value("Category", point.title),
                                     y: .value("Value", point.value!)
                                 )
-                                .foregroundStyle(Color.blue) // Simplified
+                                .foregroundStyle(Color.blue)
                                 .symbol(by: .value("Category", point.title))
 
                                 PointMark(
@@ -78,9 +106,6 @@ internal struct ActualChartView: View {
                                     y: .value("Value", point.value!)
                                 )
                                 .foregroundStyle(by: .value("Category", point.title))
-                                // .annotation(position: .overlay, alignment: .bottom, spacing: 5) {
-                                   // Optional: Text("\(point.value!, specifier: "%.0f")")
-                                // }
 
                             case .pie:
                                 SectorMark(
@@ -108,16 +133,17 @@ internal struct ActualChartView: View {
                         }
                     }
                     .frame(height: 250)
-                    .padding(.horizontal) // Keep horizontal padding for chart
-                    .padding(.bottom)     // Add bottom padding for chart area
-                    // .animation(.easeInOut, value: currentChartType) // Animation for chart type change can be re-enabled if desired
+                    .padding(.horizontal)
+                    .padding(.bottom)
                 }
             }
         }
-        .background(Color(UIColor.secondarySystemBackground)) // Give it a slight background to define its area
+        .background(Color(.systemBackground))
         .cornerRadius(10)
-        .padding(.horizontal) // Overall padding for the ActualChartView component
-        .padding(.bottom, 5) // Padding at the bottom of the component
-        .transition(.move(edge: .bottom).combined(with: .opacity)) // Transition for when ContentView shows/hides it
+        .padding(.horizontal)
+        .padding(.bottom, 5)
+        // .transition is fine as it's a view property, not state logic
+        // However, overall visibility of this view will be controlled by ChartMakerFeature's showChart state
+        // which will be handled in ChartMakerView.
     }
 }
