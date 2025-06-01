@@ -44,11 +44,6 @@
 			path = VIbeSwiftUITests;
 			sourceTree = "<group>";
 		};
-		54F4D6862DEC649200027423 /* VIbeSwiftUIUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = VIbeSwiftUIUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,7 +77,6 @@
 			children = (
 				54F4D66E2DEC649100027423 /* VIbeSwiftUI */,
 				54F4D67C2DEC649200027423 /* VIbeSwiftUITests */,
-				54F4D6862DEC649200027423 /* VIbeSwiftUIUITests */,
 				54F4D66D2DEC649100027423 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -158,9 +152,6 @@
 			);
 			dependencies = (
 				54F4D6852DEC649200027423 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				54F4D6862DEC649200027423 /* VIbeSwiftUIUITests */,
 			);
 			name = VIbeSwiftUIUITests;
 			packageProductDependencies = (
