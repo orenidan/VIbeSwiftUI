@@ -29,9 +29,9 @@ internal struct ChartMakerFeature {
         // Initializer for sample data or default state
         init() {
             self.dataPoints = [
-                DataPointRowFeature.State(chartDataPoint: ChartDataPoint(title: "Apples", valueString: "50")),
-                DataPointRowFeature.State(chartDataPoint: ChartDataPoint(title: "Bananas", valueString: "80")),
-                DataPointRowFeature.State(chartDataPoint: ChartDataPoint(title: "Cherries", valueString: "30"))
+                DataPointRowFeature.State(chartDataPoint: ChartDataPoint(title: "Apples 🍎", valueString: "50")),
+                DataPointRowFeature.State(chartDataPoint: ChartDataPoint(title: "Bananas 🍌", valueString: "80")),
+                DataPointRowFeature.State(chartDataPoint: ChartDataPoint(title: "Cherries 🍒", valueString: "30"))
             ]
             self.showChart = shouldShowChartSection // Initialize based on data
         }
@@ -109,6 +109,25 @@ internal struct ChartMakerFeature {
 // Reducer for individual data point rows
 @Reducer
 internal struct DataPointRowFeature {
+    // Fruit-Emoji Mapping
+    private static let fruitEmojis: [String: String] = [
+        "apple": "🍎", "apples": "🍎",
+        "banana": "🍌", "bananas": "🍌",
+        "cherry": "🍒", "cherries": "🍒",
+        "orange": "🍊", "oranges": "🍊",
+        "grape": "🍇", "grapes": "🍇",
+        "strawberry": "🍓", "strawberries": "🍓",
+        "watermelon": "🍉", "watermelons": "🍉",
+        "pineapple": "🍍", "pineapples": "🍍",
+        "mango": "🥭", "mangoes": "🥭",
+        "kiwi": "🥝", "kiwis": "🥝",
+        "pear": "🍐", "pears": "🍐",
+        "peach": "🍑", "peaches": "🍑",
+        "plum": "🍑", // Using peach emoji for plum for now
+        "lemon": "🍋", "lemons": "🍋",
+        "lime": "🍋"  // Using lemon emoji for lime
+    ]
+
     @ObservableState
     internal struct State: Equatable, Identifiable {
         var id: ChartDataPoint.ID // This ID must match the ID of the chartDataPoint
@@ -128,7 +147,50 @@ internal struct DataPointRowFeature {
     var body: some ReducerOf<Self> {
         BindingReducer()
         Reduce { state, action in
-            // Additional logic for row-specific actions can go here if needed
+            // Logic to add fruit emojis to the title
+            let originalTitle = state.chartDataPoint.title
+            var newTitle = originalTitle
+            var titleDidChangeByEmoji = false
+
+            for (fruit, emoji) in Self.fruitEmojis {
+                // Regex to find the fruit (case-insensitive, whole word)
+                // not already followed by its emoji (with optional spaces)
+                // Also, ensure we don't match if the fruit is ALREADY the emoji itself (edge case)
+                let escapedFruit = NSRegularExpression.escapedPattern(for: fruit)
+                let escapedEmoji = NSRegularExpression.escapedPattern(for: emoji) // Escape emoji for safety
+                let pattern = "\\b(\(escapedFruit))\\b(?!\\s*\(escapedEmoji))"
+
+                guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
+                    continue
+                }
+
+                let matches = regex.matches(in: newTitle, options: [], range: NSRange(newTitle.startIndex..., in: newTitle))
+
+                for match in matches.reversed() { // Iterate backwards to preserve ranges
+                    guard match.numberOfRanges == 2 else { continue } // Ensure we have the capturing group
+                    if let fruitNameRangeInMatch = Range(match.range(at: 1), in: newTitle) {
+                        let originalFruitName = String(newTitle[fruitNameRangeInMatch])
+                        // Construct the replacement: original name + space + emoji
+                        let replacementString = "\(originalFruitName) \(emoji)"
+
+                        // Perform the replacement
+                        newTitle.replaceSubrange(fruitNameRangeInMatch, with: replacementString)
+                        titleDidChangeByEmoji = true
+                    }
+                }
+            }
+
+            if titleDidChangeByEmoji {
+                // Basic cleanup: remove potential double spaces if any part of the process introduced them.
+                // Also, trim leading/trailing whitespace that might be left if an emoji is added at the very end then space.
+                newTitle = newTitle.replacingOccurrences(of: "  ", with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+
+                // Only update the state if the title actually changed due to emoji addition
+                // to prevent potential infinite loops if the binding itself triggers further processing.
+                if state.chartDataPoint.title != newTitle {
+                    state.chartDataPoint.title = newTitle
+                }
+            }
             return .none
         }
     }
