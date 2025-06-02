@@ -9,6 +9,12 @@ import Charts // For DisplayChartType if we move it here, or it stays in view
 internal struct ChartMakerFeature {
     @ObservableState
     internal struct State: Equatable {
+        // Define a simple identifiable struct for navigation destination
+        struct FullScreenChartPresentationState: Equatable, Identifiable {
+            let id = UUID() // Conformance to Identifiable
+            // Add any specific data needed by FullScreenChartView if necessary
+        }
+
         var dataPoints: IdentifiedArrayOf<DataPointRowFeature.State> = []
         var showChart: Bool = false // To control overall chart section visibility
         var focusedField: FocusableField? = nil
@@ -16,6 +22,7 @@ internal struct ChartMakerFeature {
         // Properties for ActualChartView's internal state, now managed here
         var currentChartType: DisplayChartType = .bar
         var isChartMinimized: Bool = false
+        var fullScreenChart: FullScreenChartPresentationState? = nil // New state for navigation destination
 
         // Computed property to determine if chart section should be shown
         var shouldShowChartSection: Bool {
@@ -49,6 +56,7 @@ internal struct ChartMakerFeature {
         case chartTypeSelected(DisplayChartType)
         case chartMinimizeButtonTapped
         case onAppear // To calculate initial showChart state
+        case setFullScreenChart(isPresented: Bool) // New action to control presentation
     }
 
     // Dependency for UUID generation
@@ -97,6 +105,14 @@ internal struct ChartMakerFeature {
 
             case .chartMinimizeButtonTapped:
                 state.isChartMinimized.toggle()
+                return .none
+
+            case let .setFullScreenChart(isPresented):
+                if isPresented {
+                    state.fullScreenChart = State.FullScreenChartPresentationState()
+                } else {
+                    state.fullScreenChart = nil
+                }
                 return .none
             }
         }
