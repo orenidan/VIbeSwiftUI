@@ -17,7 +17,7 @@ internal struct FullScreenChartView: View {
         .navigationTitle("Full Screen Chart")
         .navigationBarTitleDisplayMode(.inline)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.customLightBlue.ignoresSafeArea())
+        .background(AppTheme.Background.primary.ignoresSafeArea())
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Done") {
