@@ -1,6 +1,6 @@
 import ComposableArchitecture
-import SwiftUI
-import Charts
+import SwiftUI // For UUID, Color, etc. - though Color might move to View-specific state if needed
+import Charts // For DisplayChartType if we move it here, or it stays in view
 
 // Forward declaration for ChartDataPoint if it remains in its own file
 // (Assuming ChartDataPoint.swift, FocusableField.swift, DisplayChartType are accessible)
@@ -11,7 +11,8 @@ internal struct ChartMakerFeature {
     internal struct State: Equatable {
         // Define a simple identifiable struct for navigation destination
         struct FullScreenChartPresentationState: Equatable, Identifiable {
-            let id = UUID()
+            let id = UUID() // Conformance to Identifiable
+            // Add any specific data needed by FullScreenChartView if necessary
         }
 
         var dataPoints: IdentifiedArrayOf<DataPointRowFeature.State> = []
@@ -38,15 +39,13 @@ internal struct ChartMakerFeature {
             !dataPoints.isEmpty
         }
 
-        static var mockData = [
-            DataPointRowFeature.State(chartDataPoint: ChartDataPoint(title: "Apples 🍎", valueString: "50")),
-            DataPointRowFeature.State(chartDataPoint: ChartDataPoint(title: "Bananas 🍌", valueString: "80")),
-            DataPointRowFeature.State(chartDataPoint: ChartDataPoint(title: "Cherries 🍒", valueString: "30"))
-        ]
-
         // Initializer for sample data or default state
         init() {
-            self.dataPoints = IdentifiedArray(Self.mockData)
+            self.dataPoints = [
+                DataPointRowFeature.State(chartDataPoint: ChartDataPoint(title: "Apples 🍎", valueString: "50")),
+                DataPointRowFeature.State(chartDataPoint: ChartDataPoint(title: "Bananas 🍌", valueString: "80")),
+                DataPointRowFeature.State(chartDataPoint: ChartDataPoint(title: "Cherries 🍒", valueString: "30"))
+            ]
             self.showChart = shouldShowChartSection // Initialize based on data
         }
     }
