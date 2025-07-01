@@ -97,6 +97,16 @@ internal struct ChartMakerView: View {
                 focusedField = .title(firstDataPointId)
             }
         }
+        .task {
+            let url = URL(string: "https://httpbin.org/get")!
+
+            do {
+                let (data, response) = try await URLSession.shared.data(from: url)
+                print(response)
+            } catch {
+
+            }
+        }
         .onChange(of: focusedField) { oldValue, newValue in
             store.send(.focusFieldChanged(newValue))
         }
