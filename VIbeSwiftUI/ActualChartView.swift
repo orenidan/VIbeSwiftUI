@@ -33,7 +33,7 @@ internal struct ActualChartView: View {
                 // Only show minimize and full-screen buttons when showFullScreenButton is true
                 if showFullScreenButton {
                     Button {
-                        store.send(.chartMinimizeButtonTapped, animation: .easeInOut)
+                        store.send(.chartMinimizeButtonTapped, animation: AppTheme.Animation.standard)
                     } label: {
                         Image(systemName: isMinimized ? "chevron.down.circle.fill" : "chevron.up.circle.fill")
                             .font(.title2)
@@ -129,8 +129,8 @@ internal struct ActualChartView: View {
                 }
             }
         }
-        .background(Color.customLightBlue)
-        .cornerRadius(showFullScreenButton ? 10 : 0)
+        .background(AppTheme.Chart.background)
+        .cornerRadius(showFullScreenButton ? AppTheme.CornerRadius.sm : 0)
         .padding(.horizontal, showFullScreenButton ? nil : 0)
         .padding(.bottom, showFullScreenButton ? 5 : 0)
     }

@@ -59,8 +59,8 @@ internal struct ChartMakerView: View {
                     Spacer(minLength: 0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.customLightBlue.ignoresSafeArea(.container, edges: .bottom))
-                .animation(.easeInOut, value: store.showChart)
+                .background(AppTheme.Background.primary.ignoresSafeArea(.container, edges: .bottom))
+                .animation(AppTheme.Animation.standard, value: store.showChart)
                 .navigationTitle("Chart Maker")
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
