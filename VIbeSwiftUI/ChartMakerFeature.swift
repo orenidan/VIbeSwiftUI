@@ -91,7 +91,8 @@ internal struct ChartMakerFeature {
                 state.showChart = state.shouldShowChartSection
                 return .none
 
-            case .dataPoint: // Catch-all for other dataPoint actions if any in future
+            case .dataPoint:
+                print("Catch-all for other dataPoint actions if any in future")
                 return .none
 
             case let .deleteDataPoints(indexSet):
