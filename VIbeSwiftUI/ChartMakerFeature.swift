@@ -23,6 +23,7 @@ internal struct ChartMakerFeature {
         var currentChartType: DisplayChartType = .bar
         var isChartMinimized: Bool = false
         var fullScreenChart: FullScreenChartPresentationState? = nil // New state for navigation destination
+        var showClearAllConfirmation: Bool = false // New state for confirmation dialog
 
         // Computed property to determine if chart section should be shown
         var shouldShowChartSection: Bool {
@@ -31,6 +32,11 @@ internal struct ChartMakerFeature {
                 let point = dataPointRowState.chartDataPoint
                 return point.value != nil && !point.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             })
+        }
+
+        // Computed property to check if there are any data points to clear
+        var canClearAll: Bool {
+            !dataPoints.isEmpty
         }
 
         // Initializer for sample data or default state
@@ -48,6 +54,8 @@ internal struct ChartMakerFeature {
         case addDataPointButtonTapped
         case dataPoint(IdentifiedActionOf<DataPointRowFeature>) // Actions for individual rows
         case deleteDataPoints(IndexSet)
+        case clearAllDataPoints
+        case showClearAllConfirmation(Bool)
 
         case setShowChart(Bool) // To explicitly set showChart, driven by data presence
         case focusFieldChanged(FocusableField?)
@@ -113,6 +121,15 @@ internal struct ChartMakerFeature {
                 } else {
                     state.fullScreenChart = nil
                 }
+                return .none
+
+            case .clearAllDataPoints:
+                state.dataPoints.removeAll()
+                state.showChart = false
+                return .none
+
+            case let .showClearAllConfirmation(shouldShow):
+                state.showClearAllConfirmation = shouldShow
                 return .none
             }
         }

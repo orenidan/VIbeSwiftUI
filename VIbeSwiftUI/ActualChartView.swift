@@ -129,7 +129,7 @@ internal struct ActualChartView: View {
                 }
             }
         }
-        .background(Color(.systemBackground))
+        .background(Color.customLightBlue)
         .cornerRadius(showFullScreenButton ? 10 : 0)
         .padding(.horizontal, showFullScreenButton ? nil : 0)
         .padding(.bottom, showFullScreenButton ? 5 : 0)
